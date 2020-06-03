@@ -11,27 +11,34 @@ import os
 
 class Recorder:
 
-	def __init__(self,options,path):
-		self.options = options
-		self.path = path
+	def __init__(self):
 		self.package = 'rosbag'
 		self.executable = 'record'
 		self.request = False
 		self.recording_started = False
+		self.node_name = rospy.get_name()
 
 		rospack = rospkg.RosPack()
 		packagePath = rospack.get_path('rosbag_recorder')
 
-		configPath = os.path.join(packagePath,'config' , 'settings.cfg')
-
-		# read config file
-		config = ConfigParser.ConfigParser()
-		config.readfp(open(configPath))
-
-		self.topicOption = config.get('recordingOptions' , 'topics')
+		self.topicOption = rospy.get_param('/rosbag_recorder/topics')
 		
+		if not(rospy.get_param('/rosbag_recorder/rosbagPath') == ""):
+			self.recordingPath = rospy.get_param('/rosbag_recorder/rosbagPath')
+			print("not emptyyyy " + self.recordingPath)
+		else:
+			self.recordingPath = packagePath + '/recordings/'
+			print("emptyy " + self.recordingPath)
+
+		self.prepare_options()
+
+		"""
 		try:
-			self.recordingPath = config.get('recordingOptions', 'rosbagPath')
+			if (os.path.isdir(config.get('recordingOptions', 'rosbagPath'))):
+				self.recordingPath = config.get('recordingOptions', 'rosbagPath')
+			else: 
+				self.recordingPath = packagePath
+				print("specified folder does not exist. Defaulting to package Path")
 		except Exception as e:
 			self.recordingPath = packagePath
 			print('no path specified...Recording to : ', self.recordingPath)
@@ -39,12 +46,14 @@ class Recorder:
 			pass
 		finally:
 			self.prepare_options()		
+		"""
 
 	def prepare_options(self):
 		list = os.listdir(self.recordingPath) # dir is your directory path
 		number_files = len(list)
 		self.filename = '/recording_' + str(number_files) + '.bag'
-		self.rosbagArgs = 'record ' + self.topicOption + ' -O ' + self.recordingPath + self.filename  #'record --all -O /home/dennis/bagfiles/test.bag'
+		self.rosbagArgs = 'record ' + self.topicOption + ' -o ' + self.recordingPath # + self.filename
+		print('args are: ' + self.rosbagArgs)
 
 	def start_recording(self):
 		# first, update filename
@@ -64,7 +73,8 @@ class Recorder:
 			print('successfully stopped recording')
 
 	def start_service(self):
-		self.server = rospy.Service('recorder', SetBool, self.handle_service_call)
+		service_topic = self.node_name + '/recorder'
+		self.server = rospy.Service(service_topic, SetBool, self.handle_service_call)
 
 	def handle_service_call(self,req):
 		if (req.data):
@@ -91,9 +101,9 @@ class Recorder:
 				pass
 				
 def main():
-	rospy.init_node('rosbag_recorder', anonymous=True)
+	rospy.init_node('~', anonymous=True)
 
-	recorder = Recorder('a','b')
+	recorder = Recorder()
 	recorder.start_service()
 	recorder.check_if_true()
 

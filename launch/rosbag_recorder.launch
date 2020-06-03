@@ -1,6 +1,7 @@
 <launch>
   
   <node pkg="rosbag_recorder" type="rosbag_recorder.py" name="rosbag_recorder" output="screen" > 
+  	<param name="topics" value="/test1 /test2" />
+  	<param name="rosbagPath" value=" " />
   </node>
-
 </launch>
