@@ -25,28 +25,13 @@ class Recorder:
 		
 		if not(rospy.get_param('/rosbag_recorder/rosbagPath') == ""):
 			self.recordingPath = rospy.get_param('/rosbag_recorder/rosbagPath')
-			print("not emptyyyy " + self.recordingPath)
 		else:
 			self.recordingPath = packagePath + '/recordings/'
-			print("emptyy " + self.recordingPath)
+			if not (os.path.isdir(self.recordingPath)):
+				print('filepath does not exist! Creating a new folder')
+				os.makedirs(self.recordingPath)
 
 		self.prepare_options()
-
-		"""
-		try:
-			if (os.path.isdir(config.get('recordingOptions', 'rosbagPath'))):
-				self.recordingPath = config.get('recordingOptions', 'rosbagPath')
-			else: 
-				self.recordingPath = packagePath
-				print("specified folder does not exist. Defaulting to package Path")
-		except Exception as e:
-			self.recordingPath = packagePath
-			print('no path specified...Recording to : ', self.recordingPath)
-		else:
-			pass
-		finally:
-			self.prepare_options()		
-		"""
 
 	def prepare_options(self):
 		list = os.listdir(self.recordingPath) # dir is your directory path
